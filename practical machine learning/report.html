@@ -393,6 +393,8 @@ testing &lt;- read.csv(&quot;pml_testing.csv&quot;)</code></pre>
 <p>Training data consists of 19622 observations and 160 variables.</p>
 <p>The variable of interest “classe” is a categorical variable with 5 categories:</p>
 <pre class="r"><code>unique(training$classe)</code></pre>
+<pre><code>## [1] A B C D E
+## Levels: A B C D E</code></pre>
 <p>Therefore, the task is a classification problem.</p>
 <p>There are some missing data in the dataset (19216 observations have 93 variables, 406 (2%) observations have all 160 variables). We must take this into account in the modelling.</p>
 <pre class="r"><code>training %&gt;% 
@@ -400,6 +402,11 @@ testing &lt;- read.csv(&quot;pml_testing.csv&quot;)</code></pre>
         group_by(na)%&gt;%
         select(na)%&gt;%
         summarise(number_of_observations_with = n())</code></pre>
+<pre><code>## # A tibble: 2 x 2
+##      na number_of_observations_with
+##   &lt;dbl&gt;                       &lt;int&gt;
+## 1     0                         406
+## 2    67                       19216</code></pre>
 <p>I choose to select only variables available for everybody to avoid extrapolation from just 2% of the sample. I also delete 5 variables that are identificators of observations.</p>
 <pre class="r"><code># select only variables available for everybody
 training &lt;- training%&gt;%select_if(~ !any(is.na(.)))
@@ -427,15 +434,104 @@ my_validation &lt;-  training[-in_my_Train,]</code></pre>
                  trControl = trainControl(method=&quot;repeatedcv&quot;, number = 5, repeats = 1),
                  verbose = FALSE)
 fit_lda</code></pre>
+<pre><code>## Linear Discriminant Analysis 
+## 
+## 15699 samples
+##    53 predictor
+##     5 classes: &#39;A&#39;, &#39;B&#39;, &#39;C&#39;, &#39;D&#39;, &#39;E&#39; 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (5 fold, repeated 1 times) 
+## Summary of sample sizes: 12558, 12558, 12558, 12561, 12561 
+## Resampling results:
+## 
+##   Accuracy   Kappa   
+##   0.7152682  0.639858</code></pre>
 <p>To investigate how number of folds affects the estimations, I train the model with 2 folds and compare the accuracy of LDA analyses based on the validation set.</p>
 <pre class="r"><code>fit_lda2 &lt;- train(classe ~ ., data = my_training, 
                  method = &quot;lda&quot;, 
                  trControl = trainControl(method=&quot;repeatedcv&quot;, number = 2, repeats = 1),
                  verbose = FALSE)
-fit_lda2
-
-confusionMatrix(predict(fit_lda, my_validation), my_validation$classe)
-confusionMatrix(predict(fit_lda2, my_validation), my_validation$classe)</code></pre>
+fit_lda2</code></pre>
+<pre><code>## Linear Discriminant Analysis 
+## 
+## 15699 samples
+##    53 predictor
+##     5 classes: &#39;A&#39;, &#39;B&#39;, &#39;C&#39;, &#39;D&#39;, &#39;E&#39; 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (2 fold, repeated 1 times) 
+## Summary of sample sizes: 7850, 7849 
+## Resampling results:
+## 
+##   Accuracy  Kappa    
+##   0.714058  0.6382847</code></pre>
+<pre class="r"><code>confusionMatrix(predict(fit_lda, my_validation), my_validation$classe)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction   A   B   C   D   E
+##          A 917  91  62  36  30
+##          B  29 491  74  34 103
+##          C  84 100 431  72  66
+##          D  84  34  93 485  72
+##          E   2  43  24  16 450
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.7071          
+##                  95% CI : (0.6926, 0.7213)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.6297          
+##                                           
+##  Mcnemar&#39;s Test P-Value : &lt; 2.2e-16       
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.8217   0.6469   0.6301   0.7543   0.6241
+## Specificity            0.9220   0.9241   0.9006   0.9137   0.9735
+## Pos Pred Value         0.8072   0.6717   0.5724   0.6315   0.8411
+## Neg Pred Value         0.9286   0.9160   0.9202   0.9499   0.9200
+## Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
+## Detection Rate         0.2337   0.1252   0.1099   0.1236   0.1147
+## Detection Prevalence   0.2896   0.1863   0.1919   0.1958   0.1364
+## Balanced Accuracy      0.8718   0.7855   0.7654   0.8340   0.7988</code></pre>
+<pre class="r"><code>confusionMatrix(predict(fit_lda2, my_validation), my_validation$classe)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction   A   B   C   D   E
+##          A 917  91  62  36  30
+##          B  29 491  74  34 103
+##          C  84 100 431  72  66
+##          D  84  34  93 485  72
+##          E   2  43  24  16 450
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.7071          
+##                  95% CI : (0.6926, 0.7213)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.6297          
+##                                           
+##  Mcnemar&#39;s Test P-Value : &lt; 2.2e-16       
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.8217   0.6469   0.6301   0.7543   0.6241
+## Specificity            0.9220   0.9241   0.9006   0.9137   0.9735
+## Pos Pred Value         0.8072   0.6717   0.5724   0.6315   0.8411
+## Neg Pred Value         0.9286   0.9160   0.9202   0.9499   0.9200
+## Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
+## Detection Rate         0.2337   0.1252   0.1099   0.1236   0.1147
+## Detection Prevalence   0.2896   0.1863   0.1919   0.1958   0.1364
+## Balanced Accuracy      0.8718   0.7855   0.7654   0.8340   0.7988</code></pre>
 </div>
 <div id="random-forest" class="section level2">
 <h2>Random forest</h2>
@@ -444,6 +540,38 @@ fit_rf &lt;- caret::train(classe~., method=&quot;rf&quot;,
                        trControl = trainControl(method=&quot;repeatedcv&quot;, number = 5, repeats = 1), 
                        data=my_training)
 confusionMatrix(predict(fit_rf, my_validation), my_validation$classe)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1116    2    0    0    0
+##          B    0  757    1    0    2
+##          C    0    0  683    3    0
+##          D    0    0    0  640    2
+##          E    0    0    0    0  717
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9975          
+##                  95% CI : (0.9953, 0.9988)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9968          
+##                                           
+##  Mcnemar&#39;s Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            1.0000   0.9974   0.9985   0.9953   0.9945
+## Specificity            0.9993   0.9991   0.9991   0.9994   1.0000
+## Pos Pred Value         0.9982   0.9961   0.9956   0.9969   1.0000
+## Neg Pred Value         1.0000   0.9994   0.9997   0.9991   0.9988
+## Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
+## Detection Rate         0.2845   0.1930   0.1741   0.1631   0.1828
+## Detection Prevalence   0.2850   0.1937   0.1749   0.1637   0.1828
+## Balanced Accuracy      0.9996   0.9982   0.9988   0.9974   0.9972</code></pre>
 </div>
 <div id="gradient-boosting" class="section level2">
 <h2>Gradient Boosting</h2>
@@ -453,11 +581,45 @@ confusionMatrix(predict(fit_rf, my_validation), my_validation$classe)</code></pr
                  verbose = FALSE)
 
 confusionMatrix(predict(fit_gmb, my_validation), my_validation$classe)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1112    4    0    0    0
+##          B    3  747    5    2    1
+##          C    0    7  679    4    1
+##          D    1    1    0  636    7
+##          E    0    0    0    1  712
+## 
+## Overall Statistics
+##                                          
+##                Accuracy : 0.9906         
+##                  95% CI : (0.987, 0.9934)
+##     No Information Rate : 0.2845         
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16      
+##                                          
+##                   Kappa : 0.9881         
+##                                          
+##  Mcnemar&#39;s Test P-Value : NA             
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.9964   0.9842   0.9927   0.9891   0.9875
+## Specificity            0.9986   0.9965   0.9963   0.9973   0.9997
+## Pos Pred Value         0.9964   0.9855   0.9826   0.9860   0.9986
+## Neg Pred Value         0.9986   0.9962   0.9985   0.9979   0.9972
+## Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
+## Detection Rate         0.2835   0.1904   0.1731   0.1621   0.1815
+## Detection Prevalence   0.2845   0.1932   0.1761   0.1644   0.1817
+## Balanced Accuracy      0.9975   0.9904   0.9945   0.9932   0.9936</code></pre>
 </div>
 </div>
 <div id="i-think-that-out-of-sample-error-will-be-around" class="section level1">
 <h1>I think that out of sample error will be around</h1>
 <pre class="r"><code> 1 - confusionMatrix(predict(fit_rf, my_validation), my_validation$classe)$overall[1]</code></pre>
+<pre><code>##   Accuracy 
+## 0.00254907</code></pre>
 </div>
 <div id="creating-predictions" class="section level1">
 <h1>Creating predictions</h1>
@@ -465,6 +627,8 @@ confusionMatrix(predict(fit_gmb, my_validation), my_validation$classe)</code></p
 testing &lt;-  testing[,-c(1:5)]
 testing &lt;-  testing[,-nearZeroVar(testing)]
 predict(fit_rf, testing)</code></pre>
+<pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
+## Levels: A B C D E</code></pre>
 </div>
 
 
