@@ -1,0 +1,139 @@
+---
+title: "Practical Machine Learning course project"
+author: 
+date: "7/21/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=F)
+library(tidyverse)
+library(caret)
+library(mice) # for missing data pattern
+```
+
+
+
+# Summary
+
+The goal of your project is to predict the manner in which the participants did the exercise (variable "classe" in the training set). Three classification method were trained, linear discriminant analysis, random forest and gradient boosting. 
+Random forest had the highest accuracy (validation error around 99.8%), and therefore is used to make predictions from the testing data.
+
+# Analyses
+
+
+```{r}
+if (!file.exists("pml_training.csv")){download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", "pml_training.csv", method = "curl")}
+if (!file.exists("pml_testing.csv")){download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", "pml_testing.csv", method = "curl")}
+training <- read.csv("pml_training.csv")
+testing <- read.csv("pml_testing.csv")
+```
+ 
+Training data consists of 19622  observations and 160 variables. 
+
+The variable of interest "classe" is a categorical variable with 5 categories: 
+ 
+```{r}
+unique(training$classe)
+```
+Therefore, the task is a classification problem.
+
+There are some missing data in the dataset (19216 observations have 93 variables,  406 (2%) observations have all 160 variables). We must take this into account in the modelling.   
+
+```{r}
+training %>% 
+  mutate(na = rowSums(is.na(.)))%>%
+        group_by(na)%>%
+        select(na)%>%
+        summarise(number_of_observations_with = n())
+
+```
+
+I choose to select only variables available for everybody to avoid extrapolation from just 2% of the sample. 
+I also delete 5 variables that are identificators of observations. 
+
+```{r}
+# select only variables available for everybody
+training <- training%>%select_if(~ !any(is.na(.)))
+# deleting identifícators 
+training <-  training[,-c(1:5)]
+```
+
+Initially, I have tried to run training with all the variables, but it took too much time. Therefore, I have decided to clear the data set a little bit more by droping tha variables with near zero variance.
+```{r}
+training <-  training[,-nearZeroVar(training)]
+```
+
+# Training and cross-validation
+ 
+First, I create a partition of the data into my training and validation sets since I will be comparing several models to use for prediction in the initial testing data set. 
+```{r}
+set.seed(234556)
+
+in_my_Train <- createDataPartition(training$classe, 
+                                   p = 0.8, 
+                                   list = F)
+my_training <-  training[in_my_Train,]
+my_validation <-  training[-in_my_Train,]
+```
+
+Since the task is classification, I will compare linear discriminant analysis, random forest, and gradient boosting. 
+I compare the accuracy by traingin the models on my training set. I compare the performance on the validation and will use the model with the highest accuracy to predict using the intial testing data set.
+
+##  Linear Discriminant Analysis
+First, I predict "classe" using Linear Discriminant analysis. To estimate out of bag error, I use cross validation with 5 folds. 
+```{r}
+fit_lda <- train(classe ~ ., data = my_training, 
+                 method = "lda", 
+                 trControl = trainControl(method="repeatedcv", number = 5, repeats = 1),
+                 verbose = FALSE)
+fit_lda
+```
+To investigate how number of folds affects the estimations, I train the model with 2 folds and compare the accuracy of LDA analyses based on the validation set.
+```{r}
+fit_lda2 <- train(classe ~ ., data = my_training, 
+                 method = "lda", 
+                 trControl = trainControl(method="repeatedcv", number = 2, repeats = 1),
+                 verbose = FALSE)
+fit_lda2
+
+confusionMatrix(predict(fit_lda, my_validation), my_validation$classe)
+confusionMatrix(predict(fit_lda2, my_validation), my_validation$classe)
+```
+
+## Random forest
+
+```{r}
+# random forest
+fit_rf <- caret::train(classe~., method="rf", 
+                       trControl = trainControl(method="repeatedcv", number = 5, repeats = 1), 
+                       data=my_training)
+confusionMatrix(predict(fit_rf, my_validation), my_validation$classe)
+```
+
+## Gradient Boosting
+```{r}
+fit_gmb <- train(classe ~ ., data = my_training, 
+                 method = "gbm", 
+                 trControl = trainControl(method="repeatedcv", number = 5, repeats = 1),
+                 verbose = FALSE)
+
+confusionMatrix(predict(fit_gmb, my_validation), my_validation$classe)
+```
+
+
+# I think that out of sample error will be around
+
+```{r}
+ 1 - confusionMatrix(predict(fit_rf, my_validation), my_validation$classe)$overall[1]
+```
+
+
+# Creating predictions
+```{r}
+testing <- testing%>%select_if(~ !any(is.na(.)))
+testing <-  testing[,-c(1:5)]
+testing <-  testing[,-nearZeroVar(testing)]
+predict(fit_rf, testing)
+```
+
