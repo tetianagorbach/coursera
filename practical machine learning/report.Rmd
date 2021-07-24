@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval=F)
+knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(caret)
 library(mice) # for missing data pattern
@@ -29,7 +29,7 @@ training <- read.csv("pml_training.csv")
 testing <- read.csv("pml_testing.csv")
 ```
  
-Training data consists of 19622  observations and 160 variables. 
+Training data consists of `r nrow(training)`  observations and `r ncol(training)` variables. 
 
 The variable of interest "classe" is a categorical variable with 5 categories: 
  
