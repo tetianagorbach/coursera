@@ -17,10 +17,16 @@ library("leaflet")
 df <- data.frame(lat = c(63.82170571071128, 50.37978453859908),
                  lng = c(20.301224623748556, 30.46865883014888))
 
+my_sites <- c(
+        "<a href = https://www.umu.se/en/>https://www.umu.se/en/</a>", 
+        "<a href = https://en.wikipedia.org/wiki/Ukrainian_Physics_and_Mathematics_Lyceum>https://en.wikipedia.org/wiki/Ukrainian_Physics_and_Mathematics_Lyceum</a>"   
+)
+
+
 df%>%
         leaflet()%>%
         addTiles()%>%
-        addMarkers()
+        addMarkers(popup = my_sites)
 ```
 
 
