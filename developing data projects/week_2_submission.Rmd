@@ -1,0 +1,27 @@
+---
+title: "Week 2 assignment of the course *Developing Data Products*."
+author: ""
+date: "8/14/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+#install.packages("leaflet", repos = "http://cran.us.r-project.org")
+library("leaflet")
+```
+
+##
+```{r, fig.align='center'}
+        
+df <- data.frame(lat = c(63.82170571071128, 50.37978453859908),
+                 lng = c(20.301224623748556, 30.46865883014888))
+
+df%>%
+        leaflet()%>%
+        addTiles()%>%
+        addMarkers()
+```
+
+
+
