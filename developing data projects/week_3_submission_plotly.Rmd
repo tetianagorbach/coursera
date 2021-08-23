@@ -2,7 +2,10 @@
 title: "Week 3 assignment: Plotly"
 author: "TG"
 date: "8/21/2021"
-output: slidy_presentation
+output:
+  ioslides_presentation:
+    widescreen: true
+    smaller: true
 ---
 
 ```{r setup, include=FALSE}
@@ -11,8 +14,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(plotly)
 ```
 
-# A plot with Plotly
-```{r, message=F}
+## A plot with Plotly
+```{r, message = F}
 plot_ly(mtcars, x = ~wt,  y = ~mpg, type= "scatter")
 ```
 
